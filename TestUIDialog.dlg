@@ -13,46 +13,13 @@ dialog = {
         ["enabled"] = true,
         ["hasCursor"] = true,
         ["lockFlow"] = false,
-        ["modal"] = true,  -- Intenta configurarlo como modal para asegurarte de que se renderiza en la pantalla
+        ["modal"] = true,
         ["offscreen"] = false,
         ["resizable"] = true,
-        ["zOrder"] = 999,  -- Asegúrate de que tenga un valor alto para estar al frente
+        ["zOrder"] = 999,
         ["text"] = "Buy an Aircraft"
     },
-    ["skin"] = {
-        ["params"] = {
-            ["name"] = "windowSkin"
-        },
-        ["states"] = {
-            ["released"] = {
-                [1] = {
-                    ["bkg"] = {
-                        ["center_center"] = "0xffffffff"  -- Asegúrate de que el fondo sea visible
-                    }
-                }
-            }
-        }
-    },
     ["children"] = {
-        ["titleLabel"] = {
-            ["type"] = "Static",
-            ["params"] = {
-                ["bounds"] = {
-                    ["h"] = 20,
-                    ["w"] = 280,
-                    ["x"] = 10,
-                    ["y"] = 10
-                },
-                ["text"] = "Buy an Aircraft Title",
-                ["visible"] = true,
-                ["zindex"] = 0
-            },
-            ["skin"] = {
-                ["params"] = {
-                    ["name"] = "staticSkin"
-                }
-            }
-        },
         ["showButton"] = {
             ["type"] = "Button",
             ["params"] = {
@@ -63,7 +30,7 @@ dialog = {
                     ["y"] = 80
                 },
                 ["enabled"] = true,
-                ["text"] = "Buy Aircraft",
+                ["text"] = "Comprar",  -- Definimos el texto del botón directamente en el archivo dlg
                 ["tooltip"] = "Click to buy the selected aircraft",
                 ["visible"] = true,
                 ["zindex"] = 1
@@ -76,7 +43,7 @@ dialog = {
                     ["released"] = {
                         [1] = {
                             ["bkg"] = {
-                                ["center_center"] = "0x80808080"  -- Color del botón para que sea visible
+                                ["center_center"] = "0x80808080"
                             },
                             ["text"] = {
                                 ["font"] = "Arial",

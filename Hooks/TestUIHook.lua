@@ -4,17 +4,63 @@ local DialogLoader = require('DialogLoader')
 local dxgui = require('dxgui')
 local net = require('net')
 local Input = require('Input')
+local lfs = require('lfs')
+local Tools = require('tools')
+local U = require("me_utilities")
 
 local dialog = nil
 local dialogPath = lfs.writedir() .. 'Scripts\\TestUIDialog.dlg'
-local hotkeyCombination = "Ctrl+K+D"
+local config = nil
+local defaultHotkey = "Ctrl+Shift+X"
+
+-- Guardar la configuración en archivo
+local function saveConfiguration()
+    local configPath = lfs.writedir() .. "Config/MenuBuyConfig.lua"
+    U.saveInFile(config, "config", configPath)
+end
+
+-- Cargar la configuración desde archivo
+local function loadConfiguration()
+    net.log("Loading config file...")
+    local configPath = lfs.writedir() .. "Config/MenuBuyConfig.lua"
+    local tbl = Tools.safeDoFile(configPath, false)
+    if (tbl and tbl.config) then
+        net.log("Configuration exists...")
+        config = tbl.config
+    else
+        net.log("Configuration not found, creating defaults...")
+        config = {
+            hotkey = defaultHotkey
+        }
+        saveConfiguration()
+    end
+end
 
 -- Disparar el evento de comprar aeronave en el contexto del servidor
 local function triggerBuyAircraftEvent()
-    net.log("Triggering buy aircraft event...")
-    -- Llama a la función 'missionCommands.onBuyAircraftEvent()' en el contexto de la misión
-    net.dostring_in('mission', 'missionCommands.onBuyAircraftEvent()')
+    net.log("Attempting to trigger buy aircraft event in mission...")
+
+    net.log("Listing all events in missionCommands table...")
+
+    for name, func in pairs(missionCommands) do
+        if type(func) == "function" then
+            net.log("Event found: " .. name)
+        end
+    end
+
+    net.log("Finished listing all events.")
+
+    -- Ejecutar la función dentro del entorno de misión, y capturar el resultado.
+    local result = net.dostring_in('mission', 'if missionCommands and missionCommands.onBuyAircraftEvent then missionCommands.onBuyAircraftEvent() else return "Function not found" end')
+
+    -- Revisar si se obtuvo un resultado
+    if result then
+        net.log("Event trigger result: " .. result)
+    else
+        net.log("No result returned from mission environment.")
+    end
 end
+
 
 local function buyAircraft()
     net.log("Buy aircraft triggered")
@@ -47,6 +93,25 @@ local function loadDialog()
 
     if dialog.showButton then
         dialog.showButton:setText("Comprar")
+        dialog.showButton:setSkin({
+            params = {
+                name = "buttonSkin"
+            },
+            states = {
+                released = {
+                    [1] = {
+                        bkg = {
+                            center_center = "0x808080ff"  -- Color de fondo gris con opacidad completa
+                        },
+                        text = {
+                            color = "0xffffffff",  -- Texto blanco
+                            font = "Arial",
+                            lineHeight = 10
+                        }
+                    }
+                }
+            }
+        })
         dialog.showButton.onChange = function()
             buyAircraft()
         end
@@ -55,12 +120,32 @@ local function loadDialog()
     end
 end
 
+local function handleHotkey()
+    if config and config.hotkey then
+        net.log("Setting hotkey callback for: " .. config.hotkey)
+        if dialog then
+            dialog:addHotKeyCallback(config.hotkey, function()
+                net.log("Key pressed: " .. tostring(keyName))
+                if dialog:getVisible() then
+                    dialog:setVisible(false)
+                else
+                    dialog:setVisible(true)
+                end
+            end)
+        else
+            net.log("Dialog not loaded yet, cannot set hotkey callback")
+        end
+    end
+end
+
 local function onMissionLoad()
     net.log("Mission loaded, showing Dialog...")
     loadDialog()
+    handleHotkey()
 end
 
 local function toggleDialogVisibility()
+    net.log("Toggle dialog visibility...")
     if dialog then
         if dialog:getVisible() then
             dialog:setVisible(false)
@@ -72,7 +157,29 @@ local function toggleDialogVisibility()
     end
 end
 
--- Conectar el hook a la carga de la misión y agregar hotkey para el cuadro de diálogo
+local function handleHotkey()
+    if config and config.hotkey then
+        net.log("Setting hotkey callback for: " .. config.hotkey)
+        if dialog then
+            dialog:addHotKeyCallback(config.hotkey, function()
+                net.log("Key pressed: " .. tostring(keyName))
+                if dialog:getVisible() then
+                    dialog:setVisible(false)
+                else
+                    dialog:setVisible(true)
+                end
+            end)
+        else
+            net.log("Dialog not loaded yet, cannot set hotkey callback")
+        end
+    end
+end
+
+-- Cargar la configuración y configurar el hook
+loadConfiguration()
+handleHotkey()
+
+-- Conectar el hook a la carga de la misión
 DCS.setUserCallbacks({
     onMissionLoadEnd = function()
         onMissionLoad()
@@ -80,11 +187,6 @@ DCS.setUserCallbacks({
     onSimulationStop = function()
         if dialog then
             dialog:setVisible(false)
-        end
-    end,
-    onKeyDown = function(keyName, unicode)
-        if Input.isKeyboardKeyPressed(hotkeyCombination) then
-            toggleDialogVisibility()
         end
     end
 })
