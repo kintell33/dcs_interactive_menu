@@ -42,6 +42,16 @@ local function loadConfiguration()
     end
 end
 
+
+local function sendChatMessage()
+    net.log("Aircraft bought event triggered")
+    
+    -- Enviar un mensaje al host del servidor
+    local message = "units: 100"
+    net.send_chat_to(message, 1)
+    net.log("Message sent to host: " .. message)
+end
+
 local function triggerBuyAircraftEvent()
     net.log("Aircraft bought event triggered")
     
