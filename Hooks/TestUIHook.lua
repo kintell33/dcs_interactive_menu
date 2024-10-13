@@ -38,27 +38,7 @@ end
 
 -- Disparar el evento de comprar aeronave en el contexto del servidor
 local function triggerBuyAircraftEvent()
-    net.log("Attempting to trigger buy aircraft event in mission...")
-
-    net.log("Listing all events in missionCommands table...")
-
-    for name, func in pairs(missionCommands) do
-        if type(func) == "function" then
-            net.log("Event found: " .. name)
-        end
-    end
-
-    net.log("Finished listing all events.")
-
-    -- Ejecutar la función dentro del entorno de misión, y capturar el resultado.
-    local result = net.dostring_in('mission', 'if missionCommands and missionCommands.onBuyAircraftEvent then missionCommands.onBuyAircraftEvent() else return "Function not found" end')
-
-    -- Revisar si se obtuvo un resultado
-    if result then
-        net.log("Event trigger result: " .. result)
-    else
-        net.log("No result returned from mission environment.")
-    end
+    trigger.action.outText("Aircraft bought", 10)  -- Mostrar el mensaje durante 10 segundos a todos los jugadores
 end
 
 
