@@ -42,9 +42,22 @@ local function loadConfiguration()
     end
 end
 
--- Disparar el evento de comprar aeronave en el contexto del servidor
 local function triggerBuyAircraftEvent()
     net.log("Aircraft bought event triggered")
+    
+    local flagName = "units_count"
+
+    local setCommand = [[
+        local currentCount = trigger.misc.getUserFlag("]] .. flagName .. [[")
+        trigger.misc.setUserFlag("]] .. flagName .. [[", currentCount + 1)
+    ]]
+    
+    local status, error = net.dostring_in('server', setCommand)
+    if not status then
+        net.log("Error: Could not set flag value, " .. error)
+    else
+        net.log("Flag '" .. flagName .. "' incremented successfully.")
+    end
 end
 
 local function buyAircraft()
