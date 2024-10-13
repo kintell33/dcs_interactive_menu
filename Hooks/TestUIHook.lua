@@ -49,6 +49,7 @@ local function triggerBuyAircraftEvent()
 
     local setCommand = [[
         local currentCount = trigger.misc.getUserFlag("]] .. flagName .. [[")
+        trigger.action.outText("Desde hook: currentCount = " .. currentCount, 5)
         trigger.misc.setUserFlag("]] .. flagName .. [[", currentCount + 1)
     ]]
     
@@ -56,7 +57,16 @@ local function triggerBuyAircraftEvent()
     if not status then
         net.log("Error: Could not set flag value, " .. error)
     else
-        net.log("Flag '" .. flagName .. "' incremented successfully.")
+        local getCommand = [[
+            local updatedCount = trigger.misc.getUserFlag("]] .. flagName .. [[")
+            return tostring(updatedCount)
+        ]]
+        local updatedStatus, updatedValue = net.dostring_in('server', getCommand)
+        if updatedStatus then
+            net.log("Flag '" .. flagName .. "' incremented successfully. New value: " .. updatedValue)
+        else
+            net.log("Flag incremented but could not retrieve updated value.")
+        end
     end
 end
 
