@@ -48,31 +48,56 @@ local function triggerBuyAircraftEvent()
     local flagName = "units_count"
 
     local setCommand = [[
-        local currentCount = trigger.misc.getUserFlag("]] .. flagName .. [[")
-        trigger.action.outText("Desde hook: currentCount = " .. currentCount, 5)
-        trigger.misc.setUserFlag("]] .. flagName .. [[", currentCount + 1)
+        trigger.action.setUserFlag("]].. flagName .. [[",]]..tostring(100)..[[);
+		return "true"
     ]]
     
     local status, error = net.dostring_in('server', setCommand)
+
     if not status then
         net.log("Error: Could not set flag value, " .. error)
-    else
-        local getCommand = [[
-            local updatedCount = trigger.misc.getUserFlag("]] .. flagName .. [[")
-            return tostring(updatedCount)
-        ]]
-        local updatedStatus, updatedValue = net.dostring_in('server', getCommand)
-        if updatedStatus then
-            net.log("Flag '" .. flagName .. "' incremented successfully. New value: " .. updatedValue)
-        else
-            net.log("Flag incremented but could not retrieve updated value.")
-        end
     end
 end
+
+local function triggerLoadAircraftEvent()
+    net.log("Load Aircraft bought event triggered")
+
+    local flagName = "units_count"
+
+    -- Comando para obtener y verificar el valor del flag
+    local getCommand = [[
+        -- Obtener el valor del flag
+        local currentCount = tonumber(trigger.misc.getUserFlag("]] .. flagName .. [[")) or 0
+        if currentCount == nil then
+            trigger.action.outText("hook: valor del flag '" .. "]] .. flagName .. [[" .. "' es nil", 5)
+        else
+            trigger.action.outText("hook: valor del flag '" .. "]] .. flagName .. [[" .. "' es " .. tostring(currentCount), 5)
+        end
+
+        -- Loguear el resultado para depuración
+        net.log("Desde hook: El valor del flag ']] .. flagName .. [[' es " .. tostring(currentCount))
+    ]]
+
+    -- Ejecutar el comando para obtener el valor del flag
+    local status, error = net.dostring_in('server', getCommand)
+    
+    if not status then
+        net.log("Error: Could not get flag value, " .. tostring(error))
+    else
+        net.log("Flag value retrieval completed successfully.")
+    end
+end
+
 
 local function buyAircraft()
     net.log("Buy aircraft triggered")
     triggerBuyAircraftEvent()
+end
+
+
+local function loadAircraft()
+    net.log("Load aircraft triggered")
+    triggerLoadAircraftEvent()
 end
 
 local function loadDialog()
@@ -105,7 +130,15 @@ local function loadDialog()
             buyAircraft()
         end
     else
-        net.log("Error: showButton not found in dialog")
+        net.log("Error: buyButton not found in dialog")
+    end
+
+    if dialog.loadButton then
+        dialog.loadButton.onChange = function()
+            loadAircraft()
+        end
+    else
+        net.log("Error: loadButton not found in dialog")
     end
 end
 
