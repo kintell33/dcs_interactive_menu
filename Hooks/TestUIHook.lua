@@ -7,11 +7,16 @@ local Input = require('Input')
 local lfs = require('lfs')
 local Tools = require('tools')
 local U = require("me_utilities")
+local Skin = require("Skin")
 
 local dialog = nil
-local dialogPath = lfs.writedir() .. 'Scripts\\TestUIDialog.dlg'
+local dialogPath = lfs.writedir() .. 'Scripts/TestUIDialog.dlg'
 local config = nil
 local defaultHotkey = "Ctrl+Shift+X"
+local visibilityStatus = false  -- Variable para rastrear el estado de visibilidad
+
+local dialogDefaultSkin = nil
+local dialogSkinHidden = Skin.windowSkinChatMin()
 
 -- Guardar la configuración en archivo
 local function saveConfiguration()
@@ -38,13 +43,56 @@ end
 
 -- Disparar el evento de comprar aeronave en el contexto del servidor
 local function triggerBuyAircraftEvent()
-    trigger.action.outText("Aircraft bought", 10)  -- Mostrar el mensaje durante 10 segundos a todos los jugadores
+    net.log("Aircraft bought event triggered")
 end
-
 
 local function buyAircraft()
     net.log("Buy aircraft triggered")
     triggerBuyAircraftEvent()
+end
+
+
+local function showDialog()
+    if dialog == nil then
+        local status, err = pcall(loadDialog)
+        if not status then
+            net.log("[Scratchpad] Error creating dialog: " .. tostring(err))
+            return
+        end
+    end
+
+    dialog:setVisible(true)
+    dialog:setSkin(dialogDefaultSkin)
+    dialog:setHasCursor(true)
+    visibilityStatus = true
+end
+
+local function hideDialog()
+    if dialog then
+        -- No se puede simplemente ocultar el diálogo, ya que esto lo destruiría
+        dialog:setSkin(dialogSkinHidden)
+        dialog:setHasCursor(false)
+        visibilityStatus = false
+    end
+end
+
+local function toggleDialogVisibility()
+    net.log("Toggle dialog visibility...")
+    if visibilityStatus then
+        hideDialog()
+    else
+        showDialog()
+    end
+end
+
+local function handleHotkey()
+    if config and config.hotkey then
+        net.log("Setting hotkey callback for: " .. config.hotkey)
+        Input.addHotKey(config.hotkey, function()
+            net.log("Hotkey pressed: " .. config.hotkey)
+            toggleDialogVisibility()
+        end)
+    end
 end
 
 local function loadDialog()
@@ -69,97 +117,36 @@ local function loadDialog()
     dialog:setBounds(x, y, 300, 200)
 
     dialog:setVisible(true)
+    dialogDefaultSkin = dialog:getSkin()  -- Guardar el skin por defecto
+    visibilityStatus = true  -- Actualizar el estado de visibilidad
     net.log("Dialog loaded successfully")
 
     if dialog.showButton then
         dialog.showButton:setText("Comprar")
-        dialog.showButton:setSkin({
-            params = {
-                name = "buttonSkin"
-            },
-            states = {
-                released = {
-                    [1] = {
-                        bkg = {
-                            center_center = "0x808080ff"  -- Color de fondo gris con opacidad completa
-                        },
-                        text = {
-                            color = "0xffffffff",  -- Texto blanco
-                            font = "Arial",
-                            lineHeight = 10
-                        }
-                    }
-                }
-            }
-        })
         dialog.showButton.onChange = function()
             buyAircraft()
         end
     else
         net.log("Error: showButton not found in dialog")
     end
-end
 
-local function handleHotkey()
-    if config and config.hotkey then
-        net.log("Setting hotkey callback for: " .. config.hotkey)
-        if dialog then
-            dialog:addHotKeyCallback(config.hotkey, function()
-                net.log("Key pressed: " .. tostring(keyName))
-                if dialog:getVisible() then
-                    dialog:setVisible(false)
-                else
-                    dialog:setVisible(true)
-                end
-            end)
-        else
-            net.log("Dialog not loaded yet, cannot set hotkey callback")
-        end
-    end
+    handleHotkey()
 end
 
 local function onMissionLoad()
     net.log("Mission loaded, showing Dialog...")
     loadDialog()
-    handleHotkey()
 end
 
-local function toggleDialogVisibility()
-    net.log("Toggle dialog visibility...")
-    if dialog then
-        if dialog:getVisible() then
-            dialog:setVisible(false)
-        else
-            dialog:setVisible(true)
-        end
-    else
-        loadDialog()  -- Si no está cargado, lo cargamos nuevamente
-    end
-end
-
-local function handleHotkey()
-    if config and config.hotkey then
-        net.log("Setting hotkey callback for: " .. config.hotkey)
-        if dialog then
-            dialog:addHotKeyCallback(config.hotkey, function()
-                net.log("Key pressed: " .. tostring(keyName))
-                if dialog:getVisible() then
-                    dialog:setVisible(false)
-                else
-                    dialog:setVisible(true)
-                end
-            end)
-        else
-            net.log("Dialog not loaded yet, cannot set hotkey callback")
-        end
-    end
+local function onGameStart()
+    net.log("Game started, showing Dialog...")
+    loadDialog()
 end
 
 -- Cargar la configuración y configurar el hook
 loadConfiguration()
-handleHotkey()
 
--- Conectar el hook a la carga de la misión
+-- Conectar el hook a la carga de la misión y al inicio del juego
 DCS.setUserCallbacks({
     onMissionLoadEnd = function()
         onMissionLoad()
