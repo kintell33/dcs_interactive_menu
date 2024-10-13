@@ -77,8 +77,8 @@ local function loadDialog()
     visibilityStatus = true  -- Actualizar el estado de visibilidad
     net.log("Dialog loaded successfully")
 
-    if dialog.showButton then
-        dialog.showButton.onChange = function()
+    if dialog.buyButton then
+        dialog.buyButton.onChange = function()
             buyAircraft()
         end
     else
@@ -150,11 +150,6 @@ DCS.setUserCallbacks({
     onMissionLoadEnd = function()
         onMissionLoad()
     end,
-    onSimulationStop = function()
-        if dialog then
-            hideDialog()
-        end
-    end
 })
 
 net.log("Custom Hook Loaded UI...")
