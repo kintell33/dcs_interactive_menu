@@ -1,0 +1,25 @@
+dialog = {
+    ["type"] = "Window",
+    ["params"] = {
+        ["bounds"] = {
+            [1] = {
+                ["h"] = 1,
+                ["w"] = 1,
+                ["x"] = 0,
+                ["y"] = 0
+            }
+        },
+        ["draggable"] = false,
+        ["enabled"] = true,
+        ["hasCursor"] = false,
+        ["lockFlow"] = false,
+        ["modal"] = false,
+        ["offscreen"] = false,
+        ["resizable"] = false,
+        ["zOrder"] = 0,
+        ["text"] = ""
+    },
+    ["children"] = {
+        -- No children elements
+    }
+}
